@@ -63,8 +63,8 @@ getSideNeighbours cell = [(rowIndex, columnIndex-1), (rowIndex, columnIndex+1)]
                         where rowIndex = fst cell
                               columnIndex = snd cell
 
-countNeighbouringBombs :: Board -> Set.Set Cell -> Int
-countNeighbouringBombs board cells = Set.size $ Set.intersection (bombs board) cells
+countNeighbouringBombs :: Board -> Cell -> Int
+countNeighbouringBombs board cell = Set.size $ Set.intersection (bombs board) (getNeighbourCells cell)
 
 generateCellsSet :: Int -> Int -> Set.Set Cell
 generateCellsSet width height = Set.fromList (generateCellsList rowIndexes columnIndexes)
@@ -92,3 +92,7 @@ generateBoard w h bombsSet = Board {
                                         flaggedCells = Set.empty,
                                         bombs = bombsSet
                                     }
+
+                                    
+showBoard :: Board -> String
+showBoard board = show $ map (countNeighbouringBombs board) (Set.toList (allCells board))
