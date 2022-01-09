@@ -3,4 +3,4 @@ module Main where
 import Minesweeper
 
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = do print (show (generateCellsSet 5 5))
