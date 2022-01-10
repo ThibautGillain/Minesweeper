@@ -118,19 +118,28 @@ printCells currentRow currentColumn board =
         y = (height board) - currentRow + 1
         currentCell = (x, y)
         currentCellFormat = if (isBomb board currentCell)
-                            then bombCell
+                            then bombCellConsole
                             else if (isFlagged board currentCell)
-                                 then flaggedCell
+                                 then flaggedCellConsole
                                  else if (isUntouched board currentCell)
-                                      then untouchedCell
+                                      then untouchedCellConsole
                                       else show $ countNeighbouringBombs board currentCell
     in currentCellFormat ++ printCells currentRow (currentColumn -1) board
 
+bombCellConsole :: String
+bombCellConsole = "| B "
+
+flaggedCellConsole :: String
+flaggedCellConsole = "| F "
+
+untouchedCellConsole :: String
+untouchedCellConsole = "| . "
+
 bombCell :: String
-bombCell = "| B "
+bombCell = "B"
 
 flaggedCell :: String
-flaggedCell = "| F "
+flaggedCell = "F"
 
 untouchedCell :: String
-untouchedCell = "| . "
+untouchedCell = "."
