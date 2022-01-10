@@ -1,9 +1,7 @@
 module Main where
 
 import Minesweeper
+import UI
 
 main :: IO ()
-main = do putStr $ showBoard board
-
-board :: Board
-board = generateBoard 5 5 generateBombs
+main = do startMinesweeperUI
