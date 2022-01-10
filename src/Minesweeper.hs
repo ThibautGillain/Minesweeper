@@ -93,6 +93,44 @@ generateBoard w h bombsSet = Board {
                                         bombs = bombsSet
                                     }
 
+-- https://github.com/endymion64/HaskellMines/blob/master/MyBoard.hs
                                     
 showBoard :: Board -> String
-showBoard board = show $ map (countNeighbouringBombs board) (Set.toList (allCells board))
+showBoard board = 
+    printBorder (width board) ++
+    printRow (height board) board
+
+printBorder :: Int -> String
+printBorder 0 = "+\n"
+printBorder w = "+---" ++ printBorder (w-1)
+
+printRow :: Int -> Board -> String
+printRow 0 board = "\n"
+printRow currentRow board = 
+    printCells currentRow (width board) board ++
+    printBorder (width board) ++
+    printRow (currentRow-1) board
+
+printCells :: Int -> Int -> Board -> String
+printCells _ 0 _ = "|\n"
+printCells currentRow currentColumn board = 
+    let x = (width board) - currentColumn + 1
+        y = (height board) - currentRow + 1
+        currentCell = (x, y)
+        currentCellFormat = if (isBomb board currentCell)
+                            then bombCell
+                            else if (isFlagged board currentCell)
+                                 then flaggedCell
+                                 else if (isUntouched board currentCell)
+                                      then untouchedCell
+                                      else show $ countNeighbouringBombs board currentCell
+    in currentCellFormat ++ printCells currentRow (currentColumn -1) board
+
+bombCell :: String
+bombCell = "| B "
+
+flaggedCell :: String
+flaggedCell = "| F "
+
+untouchedCell :: String
+untouchedCell = "| . "
