@@ -5,6 +5,7 @@ import Graphics.UI.Threepenny.Core
 import Graphics.UI.Threepenny.JQuery
 
 import Data.IORef
+import Data.Bool
 import Control.Monad.Trans (liftIO)
 
 import Minesweeper
@@ -38,13 +39,7 @@ setup w = do
     flagMode <- UI.button #+ [string "flag"]
     unflagMode <- UI.button #+ [string "unflag"]
 
-    drawBoard initialBoard canvas
-
-    getBody w #+ [
-        column [element canvas]
-        , element discoverMode
-        , element flagMode
-        , element unflagMode]
+    drawBoard initialBoard False canvas
 
     on UI.click discoverMode $ \_ ->
         do liftIO $ writeIORef mode Discover
@@ -67,65 +62,73 @@ setup w = do
                 let cellToDiscover = getCellIndexFromMousePos (x,y)
                     newBoard = discoverCell current cellToDiscover
                 liftIO $ writeIORef currentBoard newBoard
-                drawBoard newBoard canvas
                 if (isBoardLost newBoard)
                     then do 
                         getBody w #+ [string "LOST"]
+                        drawBoard newBoard True canvas
                         return ()
                     else if (isBoardWon newBoard)
                         then do 
                             getBody w #+ [string "WON"]
+                            drawBoard newBoard True canvas
                             return ()
-                            else return ()
+                            else do drawBoard newBoard False canvas
+                                    return ()
 
             Flag -> do 
                 let cellToFlag = getCellIndexFromMousePos (x,y)
                     newBoard = flagCell current cellToFlag
                 liftIO $ writeIORef currentBoard newBoard
-                drawBoard newBoard canvas
+                drawBoard newBoard False canvas
             UnFlag -> do 
                 let cellToUnFlag = getCellIndexFromMousePos (x,y)
                     newBoard = unflagCell current cellToUnFlag
                 liftIO $ writeIORef currentBoard newBoard
-                drawBoard newBoard canvas
+                drawBoard newBoard False canvas
     
+
+    getBody w #+ [
+        column [element canvas]
+        , element discoverMode
+        , element flagMode
+        , element unflagMode]
     return ()
 
 initialBoard :: Board
 initialBoard = generateBoard boardSize boardSize generateBombs
 
-drawBoard :: Board -> Element -> UI ()
-drawBoard board canvas = do
+drawBoard :: Board -> Bool -> Element  -> UI ()
+drawBoard board showBombs canvas = do
     canvas # UI.clearCanvas
     canvas # set' UI.lineWidth 1.0
     canvas # set' UI.strokeStyle "gray"
     canvas # set' UI.textFont "14px"
     canvas # set' UI.textAlign UI.Center
     drawGridLines canvas
-    drawRow (height board) board canvas
+    drawRow (height board) board showBombs canvas
 
-drawRow :: Int -> Board -> Element -> UI ()
-drawRow 0 _ _ = return ()
-drawRow currentRow board canvas = do drawCells currentRow (width board) board canvas
-                                     drawRow (currentRow - 1) board canvas
+drawRow :: Int -> Board -> Bool -> Element -> UI ()
+drawRow 0 _ _ _ = return ()
+drawRow currentRow board showBombs canvas = do drawCells currentRow (width board) board showBombs canvas
+                                               drawRow (currentRow - 1) board showBombs canvas
 
 
-drawCells :: Int -> Int -> Board -> Element -> UI ()
-drawCells _ 0 _ _ = return ()
-drawCells currentRow currentColumn board canvas = do
+drawCells :: Int -> Int -> Board -> Bool -> Element -> UI ()
+drawCells _ 0 _ _ _ = return ()
+drawCells currentRow currentColumn board showBombs canvas = do
     let x = (width board) - currentColumn + 1
         y = (height board) - currentRow + 1
         currentCell = (x, y)
         textPosition = (fromIntegral ( x*25 - 12 ), fromIntegral( y*25 -12 ))
-        currentCellFormat = if (isBomb board currentCell)
-                            then bombCell
-                            else if (isFlagged board currentCell)
-                                 then flaggedCell
-                                 else if (isUntouched board currentCell)
+        currentCellFormat = if showBombs && (isBomb board currentCell)
+                                then bombCell
+                                else if (isFlagged board currentCell)
+                                    then flaggedCell
+                                    else if (isUntouched board currentCell)
                                       then untouchedCell
                                       else show $ countNeighbouringBombs board currentCell
     canvas # UI.fillText currentCellFormat textPosition
-    drawCells currentRow (currentColumn - 1) board canvas
+    drawCells currentRow (currentColumn - 1) board showBombs canvas
 
 drawGridLines :: Element -> UI ()
 drawGridLines canvas = do
