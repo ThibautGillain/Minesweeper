@@ -22,13 +22,25 @@ isBoardWon board = (not (isBoardLost board)) && (sizeOfUnion == getBoardSize boa
                     where sizeOfUnion = Set.size $ (bombs board) `Set.union` (discoveredCells board)
 
 discoverCell :: Board -> Cell -> Board
-discoverCell board cell = board { discoveredCells = Set.insert cell (discoveredCells board) }
+discoverCell board cell = if (not $ isDiscovered board cell) && (not $ isFlagged board cell)
+                          then board { 
+                                discoveredCells = Set.insert cell (discoveredCells board)
+                                , untouchedCells = Set.delete cell (untouchedCells board) }
+                          else board
 
 flagCell :: Board -> Cell -> Board
-flagCell board cell = board { flaggedCells = Set.insert cell (flaggedCells board) }
+flagCell board cell = if not $ isDiscovered board cell 
+                      then board { 
+                        flaggedCells = Set.insert cell (flaggedCells board) 
+                        , untouchedCells = Set.delete cell (untouchedCells board)}
+                      else board
 
 unflagCell :: Board -> Cell -> Board
-unflagCell board cell = board { flaggedCells = Set.delete cell (flaggedCells board) }
+unflagCell board cell = if (not $ isFlagged board cell) && (not $ isDiscovered board cell) 
+                        then board { 
+                            flaggedCells = Set.delete cell (flaggedCells board)
+                            , untouchedCells = Set.insert cell (untouchedCells board) }
+                        else board
 
 isDiscovered :: Board -> Cell -> Bool
 isDiscovered board cell = Set.member cell (discoveredCells board)
@@ -68,8 +80,8 @@ countNeighbouringBombs board cell = Set.size $ Set.intersection (bombs board) (g
 
 generateCellsSet :: Int -> Int -> Set.Set Cell
 generateCellsSet width height = Set.fromList (generateCellsList rowIndexes columnIndexes)
-                                where rowIndexes = [1..width]
-                                      columnIndexes = [1..height]
+                                where rowIndexes = [1..height]
+                                      columnIndexes = [1..width]
 
 generateCellsList :: [Int] -> [Int] -> [Cell]
 generateCellsList [] _ = []
@@ -80,7 +92,7 @@ generateCellsRow rowIndex columnIndexes = (zip (replicate (length columnIndexes)
 
 -- TODO: To be done randomly
 generateBombs :: Set.Set Cell
-generateBombs = Set.fromList [(1,1)]
+generateBombs = Set.fromList [(2,3), (2,4), (4,3), (4,4)]
 
 generateBoard :: Int -> Int -> Set.Set Cell -> Board
 generateBoard w h bombsSet = Board {
@@ -118,19 +130,28 @@ printCells currentRow currentColumn board =
         y = (height board) - currentRow + 1
         currentCell = (x, y)
         currentCellFormat = if (isBomb board currentCell)
-                            then bombCell
+                            then bombCellConsole
                             else if (isFlagged board currentCell)
-                                 then flaggedCell
+                                 then flaggedCellConsole
                                  else if (isUntouched board currentCell)
-                                      then untouchedCell
+                                      then untouchedCellConsole
                                       else show $ countNeighbouringBombs board currentCell
     in currentCellFormat ++ printCells currentRow (currentColumn -1) board
 
+bombCellConsole :: String
+bombCellConsole = "| B "
+
+flaggedCellConsole :: String
+flaggedCellConsole = "| F "
+
+untouchedCellConsole :: String
+untouchedCellConsole = "| . "
+
 bombCell :: String
-bombCell = "| B "
+bombCell = "B"
 
 flaggedCell :: String
-flaggedCell = "| F "
+flaggedCell = "F"
 
 untouchedCell :: String
-untouchedCell = "| . "
+untouchedCell = "."
