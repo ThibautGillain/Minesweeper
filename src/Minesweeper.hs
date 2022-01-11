@@ -22,9 +22,11 @@ isBoardWon board = (not (isBoardLost board)) && (sizeOfUnion == getBoardSize boa
                     where sizeOfUnion = Set.size $ (bombs board) `Set.union` (discoveredCells board)
 
 discoverCell :: Board -> Cell -> Board
-discoverCell board cell = board { 
-    discoveredCells = Set.insert cell (discoveredCells board)
-    , untouchedCells = Set.delete cell (untouchedCells board) }
+discoverCell board cell = if (not $ isDiscovered board cell) && (not $ isFlagged board cell)
+                          then board { 
+                                discoveredCells = Set.insert cell (discoveredCells board)
+                                , untouchedCells = Set.delete cell (untouchedCells board) }
+                          else board
 
 flagCell :: Board -> Cell -> Board
 flagCell board cell = if not $ isDiscovered board cell 

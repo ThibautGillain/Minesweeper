@@ -68,6 +68,16 @@ setup w = do
                     newBoard = discoverCell current cellToDiscover
                 liftIO $ writeIORef currentBoard newBoard
                 drawBoard newBoard canvas
+                if (isBoardLost newBoard)
+                    then do 
+                        getBody w #+ [string "LOST"]
+                        return ()
+                    else if (isBoardWon newBoard)
+                        then do 
+                            getBody w #+ [string "WON"]
+                            return ()
+                            else return ()
+
             Flag -> do 
                 let cellToFlag = getCellIndexFromMousePos (x,y)
                     newBoard = flagCell current cellToFlag
@@ -78,6 +88,7 @@ setup w = do
                     newBoard = unflagCell current cellToUnFlag
                 liftIO $ writeIORef currentBoard newBoard
                 drawBoard newBoard canvas
+    
     return ()
 
 initialBoard :: Board
