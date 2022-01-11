@@ -22,13 +22,23 @@ isBoardWon board = (not (isBoardLost board)) && (sizeOfUnion == getBoardSize boa
                     where sizeOfUnion = Set.size $ (bombs board) `Set.union` (discoveredCells board)
 
 discoverCell :: Board -> Cell -> Board
-discoverCell board cell = board { discoveredCells = Set.insert cell (discoveredCells board) }
+discoverCell board cell = board { 
+    discoveredCells = Set.insert cell (discoveredCells board)
+    , untouchedCells = Set.delete cell (untouchedCells board) }
 
 flagCell :: Board -> Cell -> Board
-flagCell board cell = board { flaggedCells = Set.insert cell (flaggedCells board) }
+flagCell board cell = if not $ isDiscovered board cell 
+                      then board { 
+                        flaggedCells = Set.insert cell (flaggedCells board) 
+                        , untouchedCells = Set.delete cell (untouchedCells board)}
+                      else board
 
 unflagCell :: Board -> Cell -> Board
-unflagCell board cell = board { flaggedCells = Set.delete cell (flaggedCells board) }
+unflagCell board cell = if not $ isFlagged board cell 
+                        then board { 
+                            flaggedCells = Set.delete cell (flaggedCells board)
+                            , untouchedCells = Set.insert cell (untouchedCells board) }
+                        else board
 
 isDiscovered :: Board -> Cell -> Bool
 isDiscovered board cell = Set.member cell (discoveredCells board)
@@ -80,7 +90,7 @@ generateCellsRow rowIndex columnIndexes = (zip (replicate (length columnIndexes)
 
 -- TODO: To be done randomly
 generateBombs :: Set.Set Cell
-generateBombs = Set.fromList [(1,1)]
+generateBombs = Set.fromList [(5,5)]
 
 generateBoard :: Int -> Int -> Set.Set Cell -> Board
 generateBoard w h bombsSet = Board {

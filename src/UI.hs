@@ -15,7 +15,7 @@ canvasSize = 25*boardSize
 boardSize :: Int
 boardSize = 5
 
-data Modes = Discover | Flag
+data Modes = Discover | Flag | UnFlag
 
 startMinesweeperUI :: IO ()
 startMinesweeperUI = do
@@ -30,22 +30,62 @@ setup w = do
         # set UI.width canvasSize
         # set UI.style [("border", "solid black 1px"), ("background", "#eee")]
 
+    currentBoard <- liftIO $ newIORef initialBoard
     mode <- liftIO $ newIORef Discover
     pos <- liftIO $ newIORef (0,0)
 
     discoverMode <- UI.button #+ [string "discover"]
     flagMode <- UI.button #+ [string "flag"]
+    unflagMode <- UI.button #+ [string "unflag"]
 
-    drawBoard board canvas
+    drawBoard initialBoard canvas
 
-    getBody w #+ [column [element canvas], element discoverMode, element flagMode]
+    getBody w #+ [
+        column [element canvas]
+        , element discoverMode
+        , element flagMode
+        , element unflagMode]
+
+    on UI.click discoverMode $ \_ ->
+        do liftIO $ writeIORef mode Discover
+    
+    on UI.click flagMode $ \_ ->
+        do liftIO $ writeIORef mode Flag
+
+    on UI.click unflagMode $ \_ ->
+        do liftIO $ writeIORef mode UnFlag
+
+    on UI.mousemove canvas $ \(x,y) ->
+        do liftIO $ writeIORef pos (x,y)
+
+    on UI.mousedown canvas $ \_ -> do
+        (x,y) <- liftIO $ readIORef pos
+        m <- liftIO $ readIORef mode
+        current <- liftIO $ readIORef currentBoard
+        case m of 
+            Discover -> do
+                let cellToDiscover = getCellIndexFromMousePos (x,y)
+                    newBoard = discoverCell current cellToDiscover
+                liftIO $ writeIORef currentBoard newBoard
+                drawBoard newBoard canvas
+            Flag -> do 
+                let cellToFlag = getCellIndexFromMousePos (x,y)
+                    newBoard = flagCell current cellToFlag
+                liftIO $ writeIORef currentBoard newBoard
+                drawBoard newBoard canvas
+            UnFlag -> do 
+                let cellToUnFlag = getCellIndexFromMousePos (x,y)
+                    newBoard = unflagCell current cellToUnFlag
+                liftIO $ writeIORef currentBoard newBoard
+                drawBoard newBoard canvas
     return ()
 
-board :: Board
-board = generateBoard boardSize boardSize generateBombs
+initialBoard :: Board
+initialBoard = generateBoard boardSize boardSize generateBombs
 
 drawBoard :: Board -> Element -> UI ()
 drawBoard board canvas = do
+    canvas # UI.clearCanvas
     canvas # set' UI.lineWidth 1.0
     canvas # set' UI.strokeStyle "gray"
     canvas # set' UI.textFont "14px"
@@ -95,7 +135,9 @@ drawLine canvas (a, b) = do
     UI.closePath canvas
     UI.stroke canvas
 
-
+getCellIndexFromMousePos :: (Int, Int) -> (Int, Int)
+getCellIndexFromMousePos (x, y) = 
+    ((floor $ (fromIntegral x)/25.0)+1, (floor $ (fromIntegral y)/25.0)+1)
 
 
 
