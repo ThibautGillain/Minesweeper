@@ -35,9 +35,9 @@ setup w = do
     mode <- liftIO $ newIORef Discover
     pos <- liftIO $ newIORef (0,0)
 
-    discoverMode <- UI.button #+ [string "discover"]
-    flagMode <- UI.button #+ [string "flag"]
-    unflagMode <- UI.button #+ [string "unflag"]
+    discoverMode <- UI.button #+ [string "DISCOVER"]
+    flagMode <- UI.button #+ [string "FLAG"]
+    unflagMode <- UI.button #+ [string "UNFLAG"]
 
     drawBoard initialBoard False canvas
 

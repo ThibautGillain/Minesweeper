@@ -36,7 +36,7 @@ flagCell board cell = if not $ isDiscovered board cell
                       else board
 
 unflagCell :: Board -> Cell -> Board
-unflagCell board cell = if (not $ isFlagged board cell) && (not $ isDiscovered board cell) 
+unflagCell board cell = if (isFlagged board cell) && (not $ isDiscovered board cell) 
                         then board { 
                             flaggedCells = Set.delete cell (flaggedCells board)
                             , untouchedCells = Set.insert cell (untouchedCells board) }
