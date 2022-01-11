@@ -1,6 +1,7 @@
 module Minesweeper where
 
 import qualified Data.Set as Set
+import System.Random
 
 type Cell = (Int, Int)
 
@@ -41,6 +42,9 @@ unflagCell board cell = if (isFlagged board cell) && (not $ isDiscovered board c
                             flaggedCells = Set.delete cell (flaggedCells board)
                             , untouchedCells = Set.insert cell (untouchedCells board) }
                         else board
+
+mineCell :: Board -> Cell -> Board
+mineCell board cell = board { bombs = Set.insert cell (bombs board)}
 
 isDiscovered :: Board -> Cell -> Bool
 isDiscovered board cell = Set.member cell (discoveredCells board)
@@ -91,19 +95,39 @@ generateCellsRow :: Int -> [Int] -> [Cell]
 generateCellsRow rowIndex columnIndexes = (zip (replicate (length columnIndexes) rowIndex) columnIndexes)
 
 -- TODO: To be done randomly
-generateBombs :: Set.Set Cell
-generateBombs = Set.fromList [(2,3), (2,4), (4,3), (4,4)]
+-- generateBombs :: Int -> Int -> Int -> Set.Set Cell
+-- generateBombs height width n = do return Set.empty
 
-generateBoard :: Int -> Int -> Set.Set Cell -> Board
-generateBoard w h bombsSet = Board {
-                                        width = w,
-                                        height = h,
-                                        allCells = generateCellsSet w h,
-                                        untouchedCells = generateCellsSet w h,
-                                        discoveredCells = Set.empty,
-                                        flaggedCells = Set.empty,
-                                        bombs = bombsSet
-                                    }
+generateBombsList :: Int -> Int -> Int -> IO [Cell]
+generateBombsList _ _ 0 = return []
+generateBombsList height width n = do
+    x <- randomRIO (1, height)
+    y <- randomRIO (1, width)
+    otherMines <- generateBombsList height width (n-1)
+    return $ (x,y):otherMines
+
+generateMinesInBoard :: Board -> [Cell] -> Board
+generateMinesInBoard board [] = board
+generateMinesInBoard board (cell:tail) = generateMinesInBoard (mineCell board cell) tail
+
+
+generateBoard :: Int -> Int -> Board
+generateBoard w h = Board {
+                            width = w,
+                            height = h,
+                            allCells = generateCellsSet w h,
+                            untouchedCells = generateCellsSet w h,
+                            discoveredCells = Set.empty,
+                            flaggedCells = Set.empty,
+                            bombs = Set.empty
+                          }
+
+generateBoardWithBombs :: Int -> Int -> Int -> IO Board
+generateBoardWithBombs w h n = do
+    let board = generateBoard w h
+    bombsList <- generateBombsList w h n
+    return $ generateMinesInBoard board bombsList
+
 
 -- https://github.com/endymion64/HaskellMines/blob/master/MyBoard.hs
                                     

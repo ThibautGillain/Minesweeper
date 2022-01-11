@@ -16,6 +16,9 @@ canvasSize = 25*boardSize
 boardSize :: Int
 boardSize = 5
 
+density :: Double
+density = 0.15
+
 data Modes = Discover | Flag | UnFlag
 
 startMinesweeperUI :: IO ()
@@ -31,6 +34,8 @@ setup w = do
         # set UI.width canvasSize
         # set UI.style [("border", "solid black 1px"), ("background", "#eee")]
 
+    initialBoard <- liftIO $ generateBoardWithBombs boardSize boardSize (floor $ (fromIntegral (boardSize*boardSize)) * density)
+    
     currentBoard <- liftIO $ newIORef initialBoard
     mode <- liftIO $ newIORef Discover
     pos <- liftIO $ newIORef (0,0)
@@ -93,9 +98,6 @@ setup w = do
         , element flagMode
         , element unflagMode]
     return ()
-
-initialBoard :: Board
-initialBoard = generateBoard boardSize boardSize generateBombs
 
 drawBoard :: Board -> Bool -> Element  -> UI ()
 drawBoard board showBombs canvas = do
