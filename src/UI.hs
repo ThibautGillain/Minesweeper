@@ -19,7 +19,7 @@ boardSize = 5
 density :: Double
 density = 0.15
 
-data Modes = Discover | Flag | UnFlag deriving (Show)
+data Modes = Discover | Flag | UnFlag
 
 startMinesweeperUI :: IO ()
 startMinesweeperUI = do
@@ -27,7 +27,7 @@ startMinesweeperUI = do
 
 setup :: Window -> UI ()
 setup w = do
-    return w # set UI.title "Minesweeper" 
+    return w # set UI.title "Minesweeper"
 
     canvas <- UI.canvas
         # set UI.height canvasSize
@@ -52,7 +52,6 @@ setup w = do
     endGameMessageContainer <- UI.div
     winMessage <- string "You successfully uncovered all the safe cells. Click NEW BOARD to play another game"
     lostMessage <- string "You lost, you hit a mine. Click NEW BOARD to play another game "
-    testMessage <- string "TEST"
     drawBoard initialBoard False canvas
 
     on UI.click discoverMode $ \_ -> 
@@ -113,7 +112,7 @@ setup w = do
                         newBoard = flagCell current cellToFlag
                     liftIO $ writeIORef currentBoard newBoard
                     drawBoard newBoard False canvas
-                    
+
                 UnFlag -> do 
                     let cellToUnFlag = getCellIndexFromMousePos (x,y)
                         newBoard = unflagCell current cellToUnFlag
