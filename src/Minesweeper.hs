@@ -22,6 +22,9 @@ isBoardWon :: Board -> Bool
 isBoardWon board = (not (isBoardLost board)) && (sizeOfUnion == getBoardSize board)
                     where sizeOfUnion = Set.size $ (bombs board) `Set.union` (discoveredCells board)
 
+isGameEnded :: Board -> Bool
+isGameEnded board = isBoardLost board || isBoardWon board
+
 discoverCell :: Board -> Cell -> Board
 discoverCell board cell = if (not $ isDiscovered board cell) && (not $ isFlagged board cell)
                           then board { 

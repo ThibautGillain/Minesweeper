@@ -52,7 +52,7 @@ setup w = do
     endGameMessageContainer <- UI.div
     winMessage <- string "You successfully uncovered all the safe cells. Click NEW BOARD to play another game"
     lostMessage <- string "You lost, you hit a mine. Click NEW BOARD to play another game "
-
+    testMessage <- string "TEST"
     drawBoard initialBoard False canvas
 
     on UI.click discoverMode $ \_ -> 
@@ -86,35 +86,39 @@ setup w = do
         (x,y) <- liftIO $ readIORef pos
         m <- liftIO $ readIORef mode
         current <- liftIO $ readIORef currentBoard
-        case m of 
-            Discover -> do
-                let cellToDiscover = getCellIndexFromMousePos (x,y)
-                    newBoard = discoverCell current cellToDiscover
-                liftIO $ writeIORef currentBoard newBoard
-                if (isBoardLost newBoard)
-                    then do 
-                        element endGameMessageContainer # set children [lostMessage]
-                        drawBoard newBoard True canvas
-                        return ()
-                    else if (isBoardWon newBoard)
-                        then do 
-                            element endGameMessageContainer # set children [winMessage]
-                            drawBoard newBoard True canvas
-                            return ()
-                            else do drawBoard newBoard False canvas
+        if (isGameEnded current)
+        then return ()
+        else do
+            case m of 
+                Discover -> do  
+                        let cellToDiscover = getCellIndexFromMousePos (x,y)
+                            newBoard = discoverCell current cellToDiscover
+                        
+                        liftIO $ writeIORef currentBoard newBoard
+                        if (isBoardLost newBoard)
+                            then do 
+                                element endGameMessageContainer # set children [lostMessage]
+                                drawBoard newBoard True canvas
+                                return ()
+                            else if (isBoardWon newBoard)
+                                then do 
+                                    element endGameMessageContainer # set children [winMessage]
+                                    drawBoard newBoard True canvas
                                     return ()
+                                    else do drawBoard newBoard False canvas
+                                            return ()
 
-            Flag -> do 
-                let cellToFlag = getCellIndexFromMousePos (x,y)
-                    newBoard = flagCell current cellToFlag
-                liftIO $ writeIORef currentBoard newBoard
-                drawBoard newBoard False canvas
-            UnFlag -> do 
-                let cellToUnFlag = getCellIndexFromMousePos (x,y)
-                    newBoard = unflagCell current cellToUnFlag
-                liftIO $ writeIORef currentBoard newBoard
-                drawBoard newBoard False canvas
-    
+                Flag -> do 
+                    let cellToFlag = getCellIndexFromMousePos (x,y)
+                        newBoard = flagCell current cellToFlag
+                    liftIO $ writeIORef currentBoard newBoard
+                    drawBoard newBoard False canvas
+                    
+                UnFlag -> do 
+                    let cellToUnFlag = getCellIndexFromMousePos (x,y)
+                        newBoard = unflagCell current cellToUnFlag
+                    liftIO $ writeIORef currentBoard newBoard
+                    drawBoard newBoard False canvas
     
 
     getBody w #+ [
