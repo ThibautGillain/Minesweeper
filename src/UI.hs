@@ -19,7 +19,7 @@ boardSize = 5
 density :: Double
 density = 0.15
 
-data Modes = Discover | Flag | UnFlag
+data Modes = Discover | Flag | UnFlag deriving (Show)
 
 startMinesweeperUI :: IO ()
 startMinesweeperUI = do
@@ -27,7 +27,7 @@ startMinesweeperUI = do
 
 setup :: Window -> UI ()
 setup w = do
-    return w # set UI.title "Minesweeper"
+    return w # set UI.title "Minesweeper" 
 
     canvas <- UI.canvas
         # set UI.height canvasSize
@@ -45,20 +45,38 @@ setup w = do
     unflagMode <- UI.button #+ [string "UNFLAG"]
     newBoardButton <- UI.button #+ [string "NEW BOARD"]
 
+    currentModeContainer <- UI.div
+    currentModeString <- string "Current mode : DISCOVER"
+    element currentModeContainer # set children [currentModeString]  
+
+    endGameMessageContainer <- UI.div
+    winMessage <- string "You successfully uncovered all the safe cells. Click NEW BOARD to play another game"
+    lostMessage <- string "You lost, you hit a mine. Click NEW BOARD to play another game "
+
     drawBoard initialBoard False canvas
 
-    on UI.click discoverMode $ \_ ->
+    on UI.click discoverMode $ \_ -> 
         do liftIO $ writeIORef mode Discover
+           currentModeString <- string "Current mode : DISCOVER"
+           element currentModeContainer # set children [currentModeString] 
     
     on UI.click flagMode $ \_ ->
         do liftIO $ writeIORef mode Flag
+           currentModeString <- string "Current mode : FLAG"
+           element currentModeContainer # set children [currentModeString] 
 
     on UI.click unflagMode $ \_ ->
         do liftIO $ writeIORef mode UnFlag
+           currentModeString <- string "Current mode : UNFLAG"
+           element currentModeContainer # set children [currentModeString] 
 
     on UI.click newBoardButton $ \_ ->
         do newBoard <- liftIO $ generateBoardWithBombs boardSize boardSize (floor $ (fromIntegral (boardSize*boardSize)) * density)
            liftIO $ writeIORef currentBoard newBoard
+           liftIO $ writeIORef mode Discover
+           currentModeString <- string "Current mode : DISCOVER"
+           element currentModeContainer # set children [currentModeString] 
+           element endGameMessageContainer # set children []
            drawBoard newBoard False canvas
 
     on UI.mousemove canvas $ \(x,y) ->
@@ -75,12 +93,12 @@ setup w = do
                 liftIO $ writeIORef currentBoard newBoard
                 if (isBoardLost newBoard)
                     then do 
-                        getBody w #+ [string "LOST"]
+                        element endGameMessageContainer # set children [lostMessage]
                         drawBoard newBoard True canvas
                         return ()
                     else if (isBoardWon newBoard)
                         then do 
-                            getBody w #+ [string "WON"]
+                            element endGameMessageContainer # set children [winMessage]
                             drawBoard newBoard True canvas
                             return ()
                             else do drawBoard newBoard False canvas
@@ -97,13 +115,16 @@ setup w = do
                 liftIO $ writeIORef currentBoard newBoard
                 drawBoard newBoard False canvas
     
+    
 
     getBody w #+ [
         column [element canvas]
         , element discoverMode
         , element flagMode
         , element unflagMode
-        , element newBoardButton]
+        , element newBoardButton
+        , element currentModeContainer
+        , element endGameMessageContainer]
     return ()
 
 drawBoard :: Board -> Bool -> Element  -> UI ()
@@ -160,10 +181,7 @@ drawLine canvas (a, b) = do
 
 getCellIndexFromMousePos :: (Int, Int) -> (Int, Int)
 getCellIndexFromMousePos (x, y) = 
-    ((floor $ (fromIntegral x)/25.0)+1, (floor $ (fromIntegral y)/25.0)+1)
-
-
-
+    ((floor $ (fromIntegral x)/25.0)+1, (floor $ (fromIntegral y)/25.0)+1) 
 
 
 
