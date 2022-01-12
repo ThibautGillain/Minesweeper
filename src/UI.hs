@@ -43,6 +43,7 @@ setup w = do
     discoverMode <- UI.button #+ [string "DISCOVER"]
     flagMode <- UI.button #+ [string "FLAG"]
     unflagMode <- UI.button #+ [string "UNFLAG"]
+    newBoardButton <- UI.button #+ [string "NEW BOARD"]
 
     drawBoard initialBoard False canvas
 
@@ -54,6 +55,11 @@ setup w = do
 
     on UI.click unflagMode $ \_ ->
         do liftIO $ writeIORef mode UnFlag
+
+    on UI.click newBoardButton $ \_ ->
+        do newBoard <- liftIO $ generateBoardWithBombs boardSize boardSize (floor $ (fromIntegral (boardSize*boardSize)) * density)
+           liftIO $ writeIORef currentBoard newBoard
+           drawBoard newBoard False canvas
 
     on UI.mousemove canvas $ \(x,y) ->
         do liftIO $ writeIORef pos (x,y)
@@ -96,7 +102,8 @@ setup w = do
         column [element canvas]
         , element discoverMode
         , element flagMode
-        , element unflagMode]
+        , element unflagMode
+        , element newBoardButton]
     return ()
 
 drawBoard :: Board -> Bool -> Element  -> UI ()
