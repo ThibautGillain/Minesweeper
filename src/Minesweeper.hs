@@ -64,8 +64,8 @@ isBomb board cell = Set.member cell (bombs board)
 getBoardSize :: Board -> Int
 getBoardSize board = (width board) * (height board)
 
-getNeighbourCells :: Cell -> Set.Set Cell
-getNeighbourCells cell = Set.fromList $ getTopNeighbours cell ++ getSideNeighbours cell ++ getBottomNeighbours cell
+getNeighbourCells :: Cell -> Int -> Int -> Set.Set Cell
+getNeighbourCells cell width height = Set.fromList $ filter (cellInBounds width height) (getTopNeighbours cell ++ getSideNeighbours cell ++ getBottomNeighbours cell)
 
 getTopNeighbours :: Cell -> [Cell]
 getTopNeighbours cell = [(rowIndex-1, columnIndex-1), (rowIndex-1, columnIndex), (rowIndex-1, columnIndex+1)]
@@ -83,10 +83,13 @@ getSideNeighbours cell = [(rowIndex, columnIndex-1), (rowIndex, columnIndex+1)]
                               columnIndex = snd cell
 
 countNeighbouringBombs :: Board -> Cell -> Int
-countNeighbouringBombs board cell = Set.size $ Set.intersection (bombs board) (getNeighbourCells cell)
+countNeighbouringBombs board cell = Set.size $ Set.intersection (bombs board) (getNeighbourCells cell (width board) (height board))
+
+cellInBounds :: Int -> Int -> Cell -> Bool
+cellInBounds width height (row, column) = row > 0 && row <= height && column > 0 && column <= width
 
 generateCellsSet :: Int -> Int -> Set.Set Cell
-generateCellsSet width height = Set.fromList (generateCellsList rowIndexes columnIndexes)
+generateCellsSet width height = Set.fromList $ generateCellsList rowIndexes columnIndexes
                                 where rowIndexes = [1..height]
                                       columnIndexes = [1..width]
 
