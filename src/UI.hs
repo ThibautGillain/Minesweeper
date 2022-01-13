@@ -185,7 +185,9 @@ drawCells currentRow currentColumn board showBombs canvas = do
                                     else if (isUntouched board currentCell)
                                       then untouchedCell
                                       else show $ countNeighbouringBombs board currentCell
+    canvas # set' UI.fillStyle (UI.htmlColor (getCellColour currentCellFormat))                                  
     canvas # UI.fillText currentCellFormat textPosition
+    canvas # set' UI.fillStyle (UI.htmlColor "black")
     drawCells currentRow (currentColumn - 1) board showBombs canvas
 
 drawGridLines :: Element -> UI ()
@@ -211,7 +213,13 @@ getCellIndexFromMousePos :: (Int, Int) -> (Int, Int)
 getCellIndexFromMousePos (x, y) = 
     ((floor $ (fromIntegral x)/25.0)+1, (floor $ (fromIntegral y)/25.0)+1) 
 
-
+getCellColour :: String -> String
+getCellColour "B" = "red"
+getCellColour "0" = "grey"
+getCellColour "1" = "blue"
+getCellColour "2" = "green"
+getCellColour "3" = "red"
+getCellColour _ = "brown"
 
 -- setup :: Window -> UI ()
 -- setup w = do
