@@ -44,14 +44,17 @@ setup w = do
     flagMode <- UI.button #+ [string "FLAG"]
     unflagMode <- UI.button #+ [string "UNFLAG"]
     newBoardButton <- UI.button #+ [string "NEW BOARD"]
+    playMoveButton <- UI.button #+ [string "PLAY MOVE"]
 
     currentModeContainer <- UI.div
     currentModeString <- string "Current mode : DISCOVER"
     element currentModeContainer # set children [currentModeString]  
 
     endGameMessageContainer <- UI.div
+    noSafeMoveMessageContainer <- UI.div
     winMessage <- string "You successfully uncovered all the safe cells. Click NEW BOARD to play another game"
     lostMessage <- string "You lost, you hit a mine. Click NEW BOARD to play another game "
+    noSafeMoveMessage <- string "No obvious safe move available"
     drawBoard initialBoard False canvas
 
     on UI.click discoverMode $ \_ -> 
@@ -71,12 +74,26 @@ setup w = do
 
     on UI.click newBoardButton $ \_ ->
         do newBoard <- liftIO $ generateBoardWithBombs boardSize boardSize (floor $ (fromIntegral (boardSize*boardSize)) * density)
+           element noSafeMoveMessageContainer # set children []
            liftIO $ writeIORef currentBoard newBoard
            liftIO $ writeIORef mode Discover
            currentModeString <- string "Current mode : DISCOVER"
            element currentModeContainer # set children [currentModeString] 
            element endGameMessageContainer # set children []
            drawBoard newBoard False canvas
+
+    on UI.click playMoveButton $ \_ ->
+        do current <- liftIO $ readIORef currentBoard
+           case safeMove current of
+               Just cellToDiscover -> do
+                   let newBoard = discoverCell current cellToDiscover
+                   element noSafeMoveMessageContainer # set children []
+                   liftIO $ writeIORef currentBoard newBoard
+                   drawBoard newBoard False canvas
+                   return ()
+               Nothing -> do
+                   element noSafeMoveMessageContainer # set children [noSafeMoveMessage]
+                   return ()
 
     on UI.mousemove canvas $ \(x,y) ->
         do liftIO $ writeIORef pos (x,y)
@@ -96,26 +113,32 @@ setup w = do
                         liftIO $ writeIORef currentBoard newBoard
                         if (isBoardLost newBoard)
                             then do 
+                                element noSafeMoveMessageContainer # set children []
                                 element endGameMessageContainer # set children [lostMessage]
                                 drawBoard newBoard True canvas
                                 return ()
                             else if (isBoardWon newBoard)
                                 then do 
+                                    element noSafeMoveMessageContainer # set children []
                                     element endGameMessageContainer # set children [winMessage]
                                     drawBoard newBoard True canvas
                                     return ()
-                                    else do drawBoard newBoard False canvas
-                                            return ()
+                                    else do 
+                                        element noSafeMoveMessageContainer # set children []
+                                        drawBoard newBoard False canvas
+                                        return ()
 
                 Flag -> do 
                     let cellToFlag = getCellIndexFromMousePos (x,y)
                         newBoard = flagCell current cellToFlag
+                    element noSafeMoveMessageContainer # set children []
                     liftIO $ writeIORef currentBoard newBoard
                     drawBoard newBoard False canvas
 
                 UnFlag -> do 
                     let cellToUnFlag = getCellIndexFromMousePos (x,y)
                         newBoard = unflagCell current cellToUnFlag
+                    element noSafeMoveMessageContainer # set children []
                     liftIO $ writeIORef currentBoard newBoard
                     drawBoard newBoard False canvas
     
@@ -126,6 +149,8 @@ setup w = do
         , element flagMode
         , element unflagMode
         , element newBoardButton
+        , element playMoveButton
+        , element noSafeMoveMessageContainer
         , element currentModeContainer
         , element endGameMessageContainer]
     return ()

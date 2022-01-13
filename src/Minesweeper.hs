@@ -2,6 +2,7 @@ module Minesweeper where
 
 import qualified Data.Set as Set
 import System.Random
+import Data.Maybe
 
 type Cell = (Int, Int)
 
@@ -167,6 +168,28 @@ printCells currentRow currentColumn board =
                                       then untouchedCellConsole
                                       else show $ countNeighbouringBombs board currentCell
     in currentCellFormat ++ printCells currentRow (currentColumn -1) board
+
+
+safeMove :: Board -> Maybe Cell
+safeMove board = getCellWithoutBombInNeighbours board
+
+getCellWithoutBombInNeighbours :: Board -> Maybe Cell
+getCellWithoutBombInNeighbours board = if (Set.size cellsWithoutBombsInNeighbours /= 0)
+                                                 then Set.lookupGT (0,0) $ getUntouchedNeighbours board (Set.lookupGT (0,0) cellsWithoutBombsInNeighbours)
+                                                 else Nothing
+                                                 where cellsWithoutBombsInNeighbours = Set.filter (hasNoNeighbouringMines board) (discoveredCells board)
+
+hasNoNeighbouringMines :: Board -> Cell -> Bool
+hasNoNeighbouringMines board cell = if (countNeighbouringBombs board cell == 0 && getNumberOfUntouchedNeighbours board cell /= 0)
+                                    then True
+                                    else False
+
+getNumberOfUntouchedNeighbours :: Board -> Cell -> Int
+getNumberOfUntouchedNeighbours board cell = Set.size $ Set.intersection neighbours (untouchedCells board)
+    where neighbours = getNeighbourCells cell (width board) (height board)
+
+getUntouchedNeighbours :: Board -> Maybe Cell -> Set.Set Cell
+getUntouchedNeighbours board cell = Set.intersection (untouchedCells board) (getNeighbourCells (fromJust cell) (width board) (height board))
 
 bombCellConsole :: String
 bombCellConsole = "| B "
