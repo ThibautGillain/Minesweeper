@@ -6,6 +6,7 @@ import Graphics.UI.Threepenny.JQuery
 
 import Data.IORef
 import Data.Bool
+import qualified Data.Set as Set
 import Control.Monad.Trans (liftIO)
 
 import Minesweeper
@@ -21,7 +22,7 @@ canvasSize = 25*boardSize
 -- Size of the board. It's stored as a single constant so we only have square grids but it can be splitted into two
 -- different constants to play with rectangular grids
 boardSize :: Int
-boardSize = 5
+boardSize = 10
 
 -- Density of mines in the board. It can be increased to add difficulty.
 density :: Double
@@ -49,7 +50,8 @@ setup w = do
 
     -- Generation of the initial board
     initialBoard <- liftIO $ generateBoardWithBombs boardSize boardSize (floor $ (fromIntegral (boardSize*boardSize)) * density)
-    
+    numberOfMines <- string $ show (Set.size (bombs initialBoard)) ++ " mines in that board"
+
     -- State of the application. Three IORefs represent the current board, the current mode (Discover, Flag, Unflag) and the current mouse position in the canvas.
     currentBoard <- liftIO $ newIORef initialBoard
     mode <- liftIO $ newIORef Discover
@@ -64,6 +66,9 @@ setup w = do
 
     -- Those are two div containers and different messages that are used to display the end game message, the current mode and a message
     -- when we use the "PLAY MOVE" button but the application couldn't find an obvious move.
+    mineNumberContainer <- UI.div
+    element mineNumberContainer # set children [numberOfMines]
+
     currentModeContainer <- UI.div
     currentModeString <- string "Current mode : DISCOVER"
     element currentModeContainer # set children [currentModeString]  
@@ -196,6 +201,7 @@ setup w = do
         , element unflagMode
         , element newBoardButton
         , element playMoveButton
+        , element mineNumberContainer
         , element noSafeMoveMessageContainer
         , element currentModeContainer
         , element endGameMessageContainer]
