@@ -35,16 +35,20 @@ discoverCell board cell = if (not $ isDiscovered board cell) && (not $ isFlagged
 
 flagCell :: Board -> Cell -> Board
 flagCell board cell = if not $ isDiscovered board cell 
+                    --   then board { 
+                    --     flaggedCells = Set.insert cell (flaggedCells board) 
+                    --     , untouchedCells = Set.delete cell (untouchedCells board)}
                       then board { 
-                        flaggedCells = Set.insert cell (flaggedCells board) 
-                        , untouchedCells = Set.delete cell (untouchedCells board)}
+                        flaggedCells = Set.insert cell (flaggedCells board)}
                       else board
 
 unflagCell :: Board -> Cell -> Board
 unflagCell board cell = if (isFlagged board cell) && (not $ isDiscovered board cell) 
+                        -- then board { 
+                        --     flaggedCells = Set.delete cell (flaggedCells board)
+                        --     , untouchedCells = Set.insert cell (untouchedCells board) }
                         then board { 
-                            flaggedCells = Set.delete cell (flaggedCells board)
-                            , untouchedCells = Set.insert cell (untouchedCells board) }
+                            flaggedCells = Set.delete cell (flaggedCells board)}
                         else board
 
 mineCell :: Board -> Cell -> Board
@@ -55,6 +59,9 @@ isDiscovered board cell = Set.member cell (discoveredCells board)
 
 isFlagged :: Board -> Cell -> Bool
 isFlagged board cell = Set.member cell (flaggedCells board)
+
+isUnflagged :: Board -> Cell -> Bool
+isUnflagged board cell = not $ Set.member cell (flaggedCells board)
 
 isUntouched :: Board -> Cell -> Bool
 isUntouched board cell = Set.member cell (untouchedCells board)
@@ -173,23 +180,47 @@ printCells currentRow currentColumn board =
 safeMove :: Board -> Maybe Cell
 safeMove board = getCellWithoutBombInNeighbours board
 
+safeMoveToFlag :: Board -> Maybe Cell
+safeMoveToFlag board = getObviousCellToFlag board
+
 getCellWithoutBombInNeighbours :: Board -> Maybe Cell
 getCellWithoutBombInNeighbours board = if (Set.size cellsWithoutBombsInNeighbours /= 0)
                                                  then Set.lookupGT (0,0) $ getUntouchedNeighbours board (Set.lookupGT (0,0) cellsWithoutBombsInNeighbours)
                                                  else Nothing
-                                                 where cellsWithoutBombsInNeighbours = Set.filter (hasNoNeighbouringMines board) (discoveredCells board)
+                                                 where cellsWithoutBombsInNeighbours = Set.filter (hasNoNeighbouringBombs board) (discoveredCells board)
 
-hasNoNeighbouringMines :: Board -> Cell -> Bool
-hasNoNeighbouringMines board cell = if (countNeighbouringBombs board cell == 0 && getNumberOfUntouchedNeighbours board cell /= 0)
+getObviousCellToFlag :: Board -> Maybe Cell
+getObviousCellToFlag board = if (Set.size cellsWithSameBombsAndUntouchedInNeighbours /= 0)
+                                then Set.lookupGT (0,0) $ getUntouchedAndUnflaggedNeighbours board (Set.lookupGT (0,0) cellsWithSameBombsAndUntouchedInNeighbours)
+                                else Nothing
+                                where cellsWithSameBombsAndUntouchedInNeighbours = Set.filter (hasSameNeighbouringBombsAndUntouched board) (discoveredCells board)
+
+hasNoNeighbouringBombs :: Board -> Cell -> Bool
+hasNoNeighbouringBombs board cell = if (countNeighbouringBombs board cell == 0 && getNumberOfUntouchedNeighbours board cell /= 0)
                                     then True
                                     else False
+
+hasSameNeighbouringBombsAndUntouched :: Board -> Cell -> Bool
+hasSameNeighbouringBombsAndUntouched board cell = if (numberOfNeighbouringBombs == numberOfUntouchedNeighbours && numberOfFlaggedNeighbours < numberOfNeighbouringBombs)
+                                                    then True
+                                                    else False
+                                                  where numberOfNeighbouringBombs = countNeighbouringBombs board cell
+                                                        numberOfUntouchedNeighbours = getNumberOfUntouchedNeighbours board cell
+                                                        numberOfFlaggedNeighbours = getNumberOfFlaggedNeighbours board cell
 
 getNumberOfUntouchedNeighbours :: Board -> Cell -> Int
 getNumberOfUntouchedNeighbours board cell = Set.size $ Set.intersection neighbours (untouchedCells board)
     where neighbours = getNeighbourCells cell (width board) (height board)
 
+getNumberOfFlaggedNeighbours :: Board -> Cell -> Int
+getNumberOfFlaggedNeighbours board cell = Set.size $ Set.intersection neighbours (flaggedCells board)
+    where neighbours = getNeighbourCells cell (width board) (height board)
+
 getUntouchedNeighbours :: Board -> Maybe Cell -> Set.Set Cell
 getUntouchedNeighbours board cell = Set.intersection (untouchedCells board) (getNeighbourCells (fromJust cell) (width board) (height board))
+
+getUntouchedAndUnflaggedNeighbours :: Board -> Maybe Cell -> Set.Set Cell
+getUntouchedAndUnflaggedNeighbours board cell = Set.filter (isUnflagged board) (Set.intersection (untouchedCells board) (getNeighbourCells (fromJust cell) (width board) (height board)))
 
 bombCellConsole :: String
 bombCellConsole = "| B "

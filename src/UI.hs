@@ -92,8 +92,16 @@ setup w = do
                    drawBoard newBoard False canvas
                    return ()
                Nothing -> do
-                   element noSafeMoveMessageContainer # set children [noSafeMoveMessage]
-                   return ()
+                   case safeMoveToFlag current of
+                       Just cellToFlag -> do 
+                            let newBoard = flagCell current cellToFlag
+                            element noSafeMoveMessageContainer # set children []
+                            liftIO $ writeIORef currentBoard newBoard
+                            drawBoard newBoard False canvas
+                            return ()
+                       Nothing -> do 
+                            element noSafeMoveMessageContainer # set children [noSafeMoveMessage]
+                            return ()
 
     on UI.mousemove canvas $ \(x,y) ->
         do liftIO $ writeIORef pos (x,y)
