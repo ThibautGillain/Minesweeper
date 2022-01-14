@@ -1,7 +1,7 @@
 # Minesweeper
 Haskell Minesweeper project. 
 
-This project is a Minesweeper game in Haskell done for the "Topics in Functional Programming" course in Trinity College Dublin.
+This project is a Minesweeper game in Haskell done for the "Topics in Functional Programming" module in Trinity College Dublin.
 
 It is playable with a GUI implemented using the Threepenny GUI library
 

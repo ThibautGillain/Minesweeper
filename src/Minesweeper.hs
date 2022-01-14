@@ -215,13 +215,13 @@ getUntouchedAndUnflaggedNeighbours board cell = Set.filter (isUnflagged board) (
 
 -- These functions are returning a String to format the cell displaying depending on what they contain
 bombCell :: String
-bombCell = "B"
+bombCell = "💣"
 
 flaggedCell :: String
-flaggedCell = "F"
+flaggedCell = "🚩"
 
 untouchedCell :: String
-untouchedCell = "."
+untouchedCell = " "
 
 
 
